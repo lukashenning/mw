@@ -5755,9 +5755,7 @@ function Game() {
       <input
         ref={fileInputRef}
         type="file"
-        accept=".zip"
         multiple
-        webkitdirectory=""
         style={{ display: 'none' }}
         onChange={async (e) => {
           const files = e.target.files;
