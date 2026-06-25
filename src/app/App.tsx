@@ -5665,7 +5665,6 @@ function Game() {
         <input
           ref={fileInputRef}
           type="file"
-          accept=".zip"
           multiple
           webkitdirectory=""
           style={{ display: 'none' }}
@@ -5700,7 +5699,6 @@ function Game() {
         <input
           ref={fileInputRef}
           type="file"
-          accept=".zip"
           multiple
           webkitdirectory=""
           style={{ display: 'none' }}
