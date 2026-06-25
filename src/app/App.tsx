@@ -5666,7 +5666,6 @@ function Game() {
           ref={fileInputRef}
           type="file"
           multiple
-          webkitdirectory=""
           style={{ display: 'none' }}
           onChange={async (e) => {
             const files = e.target.files;
@@ -5700,7 +5699,6 @@ function Game() {
           ref={fileInputRef}
           type="file"
           multiple
-          webkitdirectory=""
           style={{ display: 'none' }}
           onChange={async (e) => {
             const files = e.target.files;
