@@ -1,0 +1,1518 @@
+================================================================================
+SCHWARZWALD-HEXEN ADVENTURE ENGINE - SCRIPTING DOCUMENTATION
+================================================================================
+
+Version: 2.0
+Last Updated: Februar 2026
+
+================================================================================
+TABLE OF CONTENTS
+================================================================================
+
+1. INTRODUCTION
+   1.1 Philosophy & Core Concepts
+   1.2 Script Structure Overview
+   1.3 Basic Principles
+
+2. SCRIPT SECTIONS
+   2.1 DEBUG Section
+   2.2 SCENE Section (Locations)
+   2.3 PERSON Section (Characters)
+   2.4 SYMBOL Section (Items)
+   2.5 SYSTEM Section (Subroutines)
+
+3. INVENTORY SYSTEM
+   3.1 Basic Operations
+   3.2 Wildcard Patterns
+   3.3 Comparisons
+   3.4 Clear Operations
+
+4. WORLD MEMORY SYSTEM
+   4.1 Memory Operations
+   4.2 Case Sensitivity
+   4.3 Wildcard Patterns
+   4.4 Memory Placeholders
+   4.5 Copy Operations
+   4.6 Telegraph Integration
+
+5. REQUIREMENT SYSTEM
+   5.1 Basic Requirements
+   5.2 Negation Requirements
+   5.3 Memory Requirements
+   5.4 Comparison Operators
+   5.5 Combined Requirements
+
+6. NAVIGATION & CONTROL
+   6.1 Teleportation
+   6.2 Character Switching
+   6.3 System Calls
+   6.4 Auto-Skip Feature
+
+7. THEME SYSTEM
+   7.1 Colors
+   7.2 Fonts
+   7.3 Animation Styles
+   7.4 Theme Templates
+
+8. ADVANCED FEATURES
+   8.1 Inherit System
+   8.2 Display Names
+   8.3 Asset Management
+   8.4 Mobile Optimization
+
+9. REFERENCE
+   9.1 Command Overview
+   9.2 Symbol Reference
+   9.3 Pattern Syntax
+   9.4 Reserved Keywords
+
+10. EXAMPLES
+    10.1 Basic Adventure
+    10.2 Complex Interactions
+    10.3 Memory Management
+    10.4 Theme Customization
+
+================================================================================
+1. INTRODUCTION
+================================================================================
+
+1.1 PHILOSOPHY & CORE CONCEPTS
+--------------------------------------------------------------------------------
+
+The Schwarzwald-Hexen Adventure Engine is a text-based adventure game system
+built around a simple, human-readable scripting language. The engine follows
+these core principles:
+
+• DECLARATIVE SYNTAX: Define locations, characters, and items, not code logic
+• MINIMAL SYNTAX: Use symbols and keywords that are intuitive and memorable
+• DYNAMIC BEHAVIOR: Game state changes through inventory and memory operations
+• MOBILE-FIRST: Optimized for touch interfaces and small screens
+• THEME-AWARE: Full customization of colors, fonts, and animations
+
+The engine operates on three main concepts:
+
+1. LOCATIONS (SCENE): Places the player can visit
+2. CHARACTERS (PERSON): NPCs the player can interact with
+3. ITEMS (SYMBOL): Objects in the player's inventory
+
+All game logic is driven by:
+• Adding/removing items from inventory
+• Setting/checking world memory values
+• Conditional requirements for showing options
+
+1.2 SCRIPT STRUCTURE OVERVIEW
+--------------------------------------------------------------------------------
+
+A script consists of five main sections:
+
+DEBUG           - Game configuration and starting conditions
+SCENE name      - Location definitions with destinations
+PERSON name     - Character definitions with dialogues
+SYMBOL name     - Item definitions
+SYSTEM name     - Reusable command sequences
+
+Each section uses a specific format and supports different commands.
+
+1.3 BASIC PRINCIPLES
+--------------------------------------------------------------------------------
+
+• IDs are case-insensitive (converted to lowercase internally)
+• Memory keys are case-sensitive (preserve exact casing)
+• Lines starting with '//' are comments and ignored
+• Empty lines are ignored
+• Whitespace is flexible (but indentation helps readability)
+
+================================================================================
+2. SCRIPT SECTIONS
+================================================================================
+
+2.1 DEBUG SECTION
+--------------------------------------------------------------------------------
+
+The DEBUG section must appear at the beginning of the script and defines
+global game configuration.
+
+SYNTAX:
+  DEBUG
+  key: value
+  key: value
+  ...
+
+AVAILABLE KEYS:
+
+• start: COMMANDS
+  Initial commands executed when game starts
+  Example: start: &startscreen §welcome +map
+
+• debug: true|false
+  Enable debug mode (shows IDs and extra information)
+  Default: false
+
+• world: PATH
+  Telegraph path for persistent world memory storage
+  Example: world: my-game-world
+
+• token: TOKEN
+  Telegraph access token for world memory
+  Example: token: abc123xyz
+
+• background: COLOR
+  Background color in hex format
+  Default: #000000 (black)
+  Example: background: #1a1a1a
+
+• textcolor: COLOR
+  Text color in hex format
+  Default: #e6e6e6 (light gray)
+  Example: textcolor: #ffffff
+
+• textfont: FONT (SIZE, STYLE)
+  Font for body text with optional size and style
+  Default: IM Fell English (italic)
+  Example: textfont: Garamond (24, normal)
+  Example: textfont: Arial (18, bold italic)
+
+• labelfont: FONT (SIZE, STYLE)
+  Font for labels (location names, character names, item names)
+  Default: IM Fell English (normal)
+  Example: labelfont: Georgia (16, bold)
+
+• animation: page|slide|none
+  Page transition animation style
+  Default: page
+  - page: Fade and scale animation
+  - slide: Horizontal slide animation
+  - none: No animation (instant)
+
+• inherit: true|false
+  Enable/disable automatic name and image inheritance via underscores
+  Default: true
+  Example: inherit: false
+
+EXAMPLE DEBUG SECTION:
+
+DEBUG
+start: &forest §witch +amulet
+debug: false
+world: my-adventure-world
+token: secret_token_123
+background: #0a0a0a
+textcolor: #f0e6d2
+textfont: Crimson Text (22, italic)
+labelfont: Cinzel (18, normal)
+animation: page
+inherit: true
+
+
+2.2 SCENE SECTION (LOCATIONS)
+--------------------------------------------------------------------------------
+
+Locations are places the player can visit. Each location can have:
+• A display name and emoji
+• An image
+• Inhabitants (characters that appear there)
+• Destinations (places the player can go)
+• A system call (executed when entering)
+
+SYNTAX:
+  SCENE id (Display Name)
+  emoji_or_image_file
+  inhabitant1 (requirements)
+  inhabitant2
+  >destination1 (requirements)
+  >destination2 "Custom Label" (requirements)
+  #systemcall
+
+COMPONENTS:
+
+• id: Unique identifier (lowercase, alphanumeric + underscore)
+• Display Name: Optional text shown to player
+  - No parentheses: inherit from ID or image filename
+  - Empty parentheses (): no name displayed
+  - Text in parentheses: use this exact text
+
+• emoji_or_image_file: First line after declaration
+  - Single emoji: 🌲
+  - Filename: forest.jpg
+
+• Inhabitants: Characters that appear at this location
+  Format: characterID (requirements)
+  Requirements are optional
+
+• Destinations: Locations the player can travel to
+  Format: >locationID "Display Text" (requirements)
+  Both display text and requirements are optional
+  Display text overrides the destination's default name
+
+• System Call: Optional system to execute when entering
+  Format: #systemID
+
+EXAMPLE:
+
+SCENE forest (Der dunkle Wald)
+forest.jpg
+witch (amulet)
+hermit (%amulet)
+>village "Zurück zum Dorf"
+>cave (torch)
+>clearing (@hasVisitedForest)
+#enter_forest
+
+
+2.3 PERSON SECTION (CHARACTERS)
+--------------------------------------------------------------------------------
+
+Characters are NPCs the player can interact with. Each character can have:
+• A display name and emoji
+• An image
+• Greetings (initial dialogue options)
+• Reactions (responses to items)
+• A system call (executed when character appears)
+
+SYNTAX:
+  PERSON id (Display Name)
+  emoji_or_image_file
+  (requirements) "greeting text" COMMANDS
+  [itemID] (requirements) "reaction text" COMMANDS
+  Reaktionen:
+  [itemID] "reaction text" COMMANDS
+  #systemcall
+
+COMPONENTS:
+
+• Greetings: Dialogue options shown when meeting the character
+  Format: (requirements) "text" COMMANDS
+  Requirements are optional
+  Can appear on same line or separate line
+
+• Reactions: Responses when player gives/shows items
+  Format: [itemID] (requirements) "text" COMMANDS
+  
+  Special reaction: [nichts] or [] = reaction when no item selected
+  
+  Can be defined inline OR in "Reaktionen:" section
+
+• Auto-Skip: If reaction text is exactly ".", it auto-advances
+  The text is shown briefly, then automatically clicked
+  Useful for chaining commands without player interaction
+
+EXAMPLE:
+
+PERSON witch (Die Waldhexe)
+MW20-12-25
+"Willkommen, Wanderer." +hasMetWitch
+(amulet) "Du hast das Amulett! Ich werde dir helfen." &secretcave
+[mushroom] "Ah, ein Pilz! Danke." -mushroom +potion @+foundMushroom
+[amulet] (@needsHelp) "Zeig mir das Amulett später."
+Reaktionen:
+[knife] "Eine Waffe? Hier nicht willkommen!"
+[nichts] "Du zeigst mir nichts."
+#witch_appear
+
+
+2.4 SYMBOL SECTION (ITEMS)
+--------------------------------------------------------------------------------
+
+Items are objects that can be in the player's inventory. Each item can have:
+• A display name and emoji
+• An image
+• A count (managed automatically)
+
+SYNTAX:
+  SYMBOL id (Display Name)
+  emoji_or_image_file
+
+COMPONENTS:
+
+• id: Unique identifier (lowercase)
+• Display Name: Optional text shown in inventory
+  - No parentheses: inherit from ID or image filename
+  - Empty parentheses (): no name displayed
+  - Text in parentheses: use this exact text
+
+• emoji_or_image_file: Visual representation
+  - Single emoji: 🗝️
+  - Filename: key.png
+
+EXAMPLE:
+
+SYMBOL key (Rostiger Schlüssel)
+🗝️
+
+SYMBOL amulet
+amulet.jpg
+
+SYMBOL coin ()
+🪙
+
+
+2.5 SYSTEM SECTION (SUBROUTINES)
+--------------------------------------------------------------------------------
+
+Systems are reusable command sequences that can be called from multiple places.
+They are useful for complex operations that need to happen in multiple contexts.
+
+SYNTAX:
+  SYSTEM id
+  COMMANDS
+  COMMANDS
+  ...
+
+Each line in a system can contain any combination of commands (inventory,
+memory, navigation, etc.). Systems can call other systems.
+
+EXAMPLE:
+
+SYSTEM reset_game
+&%
+@%
+&start
+
+SYSTEM give_reward
++gold +gold +gold
+@+hasReward
+#show_message
+
+USAGE:
+  "Start over" #reset_game
+  [quest_item] "Hier ist deine Belohnung!" #give_reward
+
+
+================================================================================
+3. INVENTORY SYSTEM
+================================================================================
+
+The inventory system tracks items the player possesses. Each item has a count
+and a timestamp (for "last added" tracking).
+
+3.1 BASIC OPERATIONS
+--------------------------------------------------------------------------------
+
+ADD ITEM: +itemID
+  Adds one instance of an item to inventory
+  Example: +key
+  Example: +gold +gold +gold (adds 3 gold)
+
+REMOVE ITEM: -itemID
+  Removes one instance of an item
+  If count reaches 0, item is removed from inventory
+  Example: -gold
+
+REMOVE ALL: %itemID
+  Removes all instances of an item completely
+  Example: %gold
+
+CLEAR INVENTORY: &% or %%
+  Removes all items from inventory
+  Useful for "game over" or "new game" scenarios
+
+3.2 WILDCARD PATTERNS
+--------------------------------------------------------------------------------
+
+Items with IDs ending in underscore (_) support wildcard matching.
+
+Example: If you have items:
+  gold_small
+  gold_medium
+  gold_large
+
+You can check or manipulate all of them with: gold_
+
+The wildcard pattern matches any item starting with that prefix.
+
+USAGE:
+• Requirements: (gold_>10) = total of all gold_ items > 10
+• Add: +gold_small adds to that specific variant
+• Check: Automatically sums all matching items
+
+This is powerful for:
+• Item variants (sword_bronze, sword_iron, sword_steel)
+• Categories (food_bread, food_cheese, food_apple)
+• Counters (visit_forest, visit_cave, visit_mountain)
+
+3.3 COMPARISONS
+--------------------------------------------------------------------------------
+
+Check if item count is greater or less than a value:
+
+• itemID>N: Item count must be greater than N
+• itemID<N: Item count must be less than N
+
+Example:
+  >castle (gold>10) - Can enter castle if you have more than 10 gold
+  "Too poor" (gold<5) - Show this if you have less than 5 gold
+
+3.4 CLEAR OPERATIONS
+--------------------------------------------------------------------------------
+
+Two ways to clear inventory:
+
+1. &% - Clear inventory (preferred)
+2. %% - Clear inventory (alternative syntax)
+
+Example:
+  "Die and restart" &% &start
+
+
+================================================================================
+4. WORLD MEMORY SYSTEM
+================================================================================
+
+World memory is a persistent key-value storage system where:
+• Keys are case-sensitive (unlike inventory items)
+• Values are numeric (default: 0)
+• Can be stored in Telegraph for persistence across sessions
+
+4.1 MEMORY OPERATIONS
+--------------------------------------------------------------------------------
+
+ADD/INCREMENT: @+memoryID
+  Increments the value by 1 (or creates it with value 1)
+  Example: @+visitCount
+  Example: @+foundSecret
+
+REMOVE/DECREMENT: @-memoryID
+  Decrements the value by 1
+  Example: @-lives
+
+REMOVE ALL: @%memoryID
+  Sets the value to 0 and removes from memory
+  Example: @%temporary
+
+CLEAR ALL MEMORY: @%
+  Removes all memory entries
+  Example: "Reset world" @%
+
+4.2 CASE SENSITIVITY
+--------------------------------------------------------------------------------
+
+Unlike inventory items, memory keys preserve exact casing:
+
+@+PlayerName    - Creates "PlayerName"
+@+playername    - Creates "playername" (different!)
+@+PLAYERNAME    - Creates "PLAYERNAME" (also different!)
+
+This allows you to store multiple related values:
+  @+Forest  @+forest  @+FOREST
+
+Requirements also respect casing:
+  (@PlayerName)  - Checks for "PlayerName" exactly
+  (@playername)  - Checks for "playername" exactly
+
+4.3 WILDCARD PATTERNS
+--------------------------------------------------------------------------------
+
+Like inventory, memory supports wildcard patterns with underscore:
+
+Example: Store visited locations:
+  @+visited_forest
+  @+visited_cave
+  @+visited_mountain
+
+Check total visits:
+  (@visited_>5) - More than 5 total visits to any visited_ location
+
+4.4 MEMORY PLACEHOLDERS
+--------------------------------------------------------------------------------
+
+Dynamically insert random memory values into text using [@prefix_] syntax.
+
+SYNTAX: [@prefix_]
+
+The engine will:
+1. Find all memory entries starting with "prefix_"
+2. Filter to only those with value > 0
+3. Pick one randomly
+4. Replace the placeholder with the suffix (part after prefix_)
+
+EXAMPLE:
+
+Memory contains:
+  name_Anna: 1
+  name_Berta: 1
+  name_Clara: 0
+
+Text: "Hallo, [@name_]!"
+
+Possible outputs:
+  "Hallo, Anna!"
+  "Hallo, Berta!"
+  (Clara is excluded because value is 0)
+
+USE CASES:
+• Random NPC names: "[@npc_] grüßt dich"
+• Random items: "Du findest [@loot_]"
+• Random locations: "Der Weg führt nach [@destination_]"
+
+4.5 COPY OPERATIONS
+--------------------------------------------------------------------------------
+
+Copy memory entries with suffixes from one prefix to another:
+
+SYNTAX: @sourcePrefix_>@targetPrefix
+
+This copies all entries starting with sourcePrefix_ to targetPrefix.
+
+EXAMPLE:
+
+Memory contains:
+  temp_gold: 5
+  temp_silver: 3
+
+Execute: @temp_>@permanent
+
+Result:
+  temp_gold: 5
+  temp_silver: 3
+  permanent_gold: 5
+  permanent_silver: 3
+
+Special case: @prefix_>@
+Copies to empty prefix (removes prefix from key)
+
+Example: @temp_>@
+  temp_gold: 5  →  gold: 5
+
+4.6 TELEGRAPH INTEGRATION
+--------------------------------------------------------------------------------
+
+Telegraph is a cloud storage system for world memory persistence.
+
+SETUP:
+  DEBUG
+  world: my-game-id
+  token: secret-token
+
+COMMANDS:
+
+@! - UPLOAD
+  Uploads entire world memory to Telegraph
+  Overwrites remote data
+  Example: "Save game" @!
+
+@? - DOWNLOAD
+  Downloads entire world memory from Telegraph
+  Overwrites local data
+  Example: "Load game" @?
+
+Note: Only @! and @? trigger upload/download. Other @ commands (like @+, @-)
+are local-only and do not sync automatically.
+
+WORKFLOW:
+1. Player makes choices → memory updated locally
+2. Save point: @! uploads to cloud
+3. Later session: @? downloads from cloud
+4. Player continues with restored state
+
+
+================================================================================
+5. REQUIREMENT SYSTEM
+================================================================================
+
+Requirements control when options (destinations, inhabitants, greetings,
+reactions) are available to the player.
+
+5.1 BASIC REQUIREMENTS
+--------------------------------------------------------------------------------
+
+INVENTORY REQUIREMENT: itemID
+  Item must exist in inventory (count > 0)
+  Example: (key) - Player must have key
+
+MEMORY REQUIREMENT: @memoryID
+  Memory entry must exist and be > 0
+  Example: (@hasMetWitch) - Memory hasMetWitch must be set
+
+5.2 NEGATION REQUIREMENTS
+--------------------------------------------------------------------------------
+
+INVENTORY NEGATION: %itemID
+  Item must NOT be in inventory
+  Example: (%cursed) - Player must not have cursed item
+
+MEMORY NEGATION: @%memoryID
+  Memory entry must not exist or be 0
+  Example: (@%visitedCave) - Must not have visited cave
+
+5.3 MEMORY REQUIREMENTS
+--------------------------------------------------------------------------------
+
+All memory requirements are case-sensitive:
+
+  (@PlayerDead)   - Checks for "PlayerDead"
+  (@playerdead)   - Checks for "playerdead" (different!)
+
+5.4 COMPARISON OPERATORS
+--------------------------------------------------------------------------------
+
+INVENTORY COMPARISON:
+  itemID>N - Count must be greater than N
+  itemID<N - Count must be less than N
+
+MEMORY COMPARISON:
+  @memoryID>N - Value must be greater than N
+  @memoryID<N - Value must be less than N
+
+EXAMPLES:
+  (gold>100) - More than 100 gold
+  (health<10) - Less than 10 health
+  (@karma>50) - Karma value greater than 50
+  (@sins<3) - Sins value less than 3
+
+5.5 COMBINED REQUIREMENTS
+--------------------------------------------------------------------------------
+
+Combine multiple requirements with commas (AND logic):
+
+  (key, torch, @visitedCave) - Must have key AND torch AND visited cave
+  (gold>10, %cursed) - Must have >10 gold AND not have cursed item
+  (@level>5, @hasWeapon, sword) - Level>5 AND hasWeapon AND have sword
+
+All requirements must be satisfied for the option to appear.
+
+WILDCARD IN REQUIREMENTS:
+  (gold_>50) - Total of all gold_ items must be > 50
+  (@visited_>3) - Total of all visited_ entries must be > 3
+
+
+================================================================================
+6. NAVIGATION & CONTROL
+================================================================================
+
+6.1 TELEPORTATION
+--------------------------------------------------------------------------------
+
+SYNTAX: &locationID
+
+Immediately moves player to specified location.
+
+EXAMPLES:
+  &castle - Go to castle
+  "Enter the portal" &otherworld
+  [magic_key] "The key glows!" &secretroom
+
+SPECIAL:
+  &% - Clears inventory (doesn't teleport)
+  Use in combination: "Reset" &% &start
+
+6.2 CHARACTER SWITCHING
+--------------------------------------------------------------------------------
+
+SYNTAX: §characterID
+
+Changes the current character the player is talking to.
+Useful for:
+• Multi-character conversations
+• Character transformations
+• Redirecting dialogue
+
+EXAMPLES:
+  §guard - Switch to guard character
+  "Call for help" §knight
+  [disguise] "You transform!" §wizard
+
+SPECIAL:
+  § (no ID) - Removes current character (returns to location view)
+
+6.3 SYSTEM CALLS
+--------------------------------------------------------------------------------
+
+SYNTAX: #systemID
+
+Executes a named SYSTEM block, running all its commands in sequence.
+
+EXAMPLES:
+  #reset_game - Call reset_game system
+  "Collect reward" #give_gold
+  [quest_item] "Complete quest!" #complete_quest
+
+Systems can be defined anywhere in the script:
+  SYSTEM give_gold
+  +gold +gold +gold
+  @+wealthy
+
+Systems can call other systems:
+  SYSTEM end_game
+  #save_score
+  #show_credits
+  &game_over
+
+LOCATIONS AND CHARACTERS can auto-execute systems:
+
+  SCENE throne_room
+  castle.jpg
+  king
+  #enter_throne
+
+  PERSON queen
+  queen.jpg
+  #queen_appears
+  "Welcome"
+
+6.4 AUTO-SKIP FEATURE
+--------------------------------------------------------------------------------
+
+When a reaction has the text ".", it automatically advances without player
+interaction. The text appears briefly, then the commands execute and the game
+continues.
+
+SYNTAX:
+  [itemID] "." COMMANDS
+
+EXAMPLE:
+  [key] "." -key @+unlockedDoor §guard
+
+USAGE:
+1. Player selects item (e.g., gives key to character)
+2. Reaction "." appears briefly
+3. Commands execute (-key removes it, @+unlockedDoor sets memory)
+4. Character switches to guard (§guard)
+5. All happens automatically without clicking
+
+BENEFITS:
+• Smooth item consumption
+• Invisible state changes
+• Seamless character transitions
+• Chain multiple actions
+
+CAUTION:
+Avoid infinite loops! Don't create auto-skip reactions that trigger themselves.
+
+
+================================================================================
+7. THEME SYSTEM
+================================================================================
+
+The theme system allows complete visual customization of the game.
+
+7.1 COLORS
+--------------------------------------------------------------------------------
+
+BACKGROUND: background: #RRGGBB
+  Background color in hex format
+  Default: #000000 (pure black)
+
+TEXT COLOR: textcolor: #RRGGBB
+  Main text color in hex format
+  Default: #e6e6e6 (light gray)
+
+EXAMPLES:
+  background: #1a1a2e  (dark blue)
+  textcolor: #f0e6d2  (parchment)
+
+  background: #0f380f  (dark green)
+  textcolor: #9bbc0f  (Game Boy green)
+
+7.2 FONTS
+--------------------------------------------------------------------------------
+
+TEXT FONT: textfont: FontName (Size, Style)
+  Font for body text (character dialogue, descriptions)
+  
+  FontName: Any web-safe or Google Font name
+  Size: Number in pixels (optional)
+  Style: normal, italic, bold, bold italic (optional)
+  
+  Default: IM Fell English (italic)
+
+LABEL FONT: labelfont: FontName (Size, Style)
+  Font for UI labels (location names, character names, item names)
+  
+  Default: IM Fell English (normal)
+
+EXAMPLES:
+  textfont: Georgia (20, italic)
+  labelfont: Arial (14, bold)
+
+  textfont: Crimson Text (22, normal)
+  labelfont: Cinzel (16, bold)
+
+  textfont: Courier New (18, normal)
+  labelfont: Courier New (14, bold)
+
+If no size/style is specified, defaults are used:
+  textfont: Garamond  (uses default size, normal style)
+
+7.3 ANIMATION STYLES
+--------------------------------------------------------------------------------
+
+SYNTAX: animation: page|slide|none
+
+PAGE: Fade and scale animation
+  • Fades out
+  • Scales down slightly
+  • Content changes
+  • Scales up and fades in
+  • Smooth and elegant
+
+SLIDE: Horizontal slide animation
+  • Slides out to left
+  • Content changes
+  • Slides in from right
+  • Quick and dynamic
+
+NONE: No animation
+  • Instant transition
+  • Useful for very old devices
+  • Or if animations are distracting
+
+Default: page
+
+EXAMPLE:
+  animation: slide
+
+7.4 THEME TEMPLATES
+--------------------------------------------------------------------------------
+
+CLASSIC DARK:
+  background: #000000
+  textcolor: #e6e6e6
+  textfont: IM Fell English (italic)
+  labelfont: IM Fell English (normal)
+  animation: page
+
+PARCHMENT:
+  background: #f4e7d7
+  textcolor: #3e2723
+  textfont: Crimson Text (22, normal)
+  labelfont: Cinzel (16, bold)
+  animation: page
+
+RETRO TERMINAL:
+  background: #0c0c0c
+  textcolor: #00ff00
+  textfont: Courier New (16, normal)
+  labelfont: Courier New (14, bold)
+  animation: none
+
+GAME BOY:
+  background: #0f380f
+  textcolor: #9bbc0f
+  textfont: Press Start 2P (12, normal)
+  labelfont: Press Start 2P (10, normal)
+  animation: none
+
+PAPER:
+  background: #faf8f3
+  textcolor: #2c2c2c
+  textfont: Libre Baskerville (18, normal)
+  labelfont: Montserrat (14, normal)
+  animation: page
+
+
+================================================================================
+8. ADVANCED FEATURES
+================================================================================
+
+8.1 INHERIT SYSTEM
+--------------------------------------------------------------------------------
+
+The inherit system allows automatic inheritance of names and images based on
+ID structure using underscores.
+
+ENABLED (default): inherit: true
+DISABLED: inherit: false
+
+HOW IT WORKS:
+
+If an item has an ID with underscores, it can inherit properties from
+"parent" items with shorter IDs:
+
+  sword
+  sword_iron
+  sword_iron_enchanted
+
+If inherit is enabled:
+• sword_iron inherits image from "sword" if no image specified
+• sword_iron_enchanted inherits from "sword_iron", which inherits from "sword"
+
+If inherit is disabled:
+• No automatic inheritance
+• Each item must define its own image
+
+NAME INHERITANCE:
+
+If no explicit name is given (no parentheses), the system:
+1. Checks if inherit is enabled
+2. Looks for parent items (shorter prefixes)
+3. Uses parent's name if found
+4. Otherwise, uses ID as name
+
+EXAMPLE WITH INHERIT ENABLED:
+
+  SYMBOL sword (Schwert)
+  sword.jpg
+
+  SYMBOL sword_iron
+  (No image specified - inherits sword.jpg)
+  (No name specified - inherits "Schwert")
+
+  SYMBOL sword_iron_enchanted (Verzaubertes Schwert)
+  (No image specified - inherits sword.jpg)
+  (Explicit name given - uses "Verzaubertes Schwert")
+
+EXAMPLE WITH INHERIT DISABLED:
+
+  inherit: false
+
+  SYMBOL sword (Schwert)
+  sword.jpg
+
+  SYMBOL sword_iron (Eisenschwert)
+  sword_iron.jpg
+  (Must provide own image - no inheritance)
+
+8.2 DISPLAY NAMES
+--------------------------------------------------------------------------------
+
+Every SCENE, PERSON, and SYMBOL can have a display name that differs from
+its ID. This is specified in parentheses after the ID.
+
+SYNTAX:
+  SCENE id (Display Name)
+  PERSON id (Display Name)
+  SYMBOL id (Display Name)
+
+THREE MODES:
+
+1. NO PARENTHESES: Use ID or inherit
+   SCENE castle
+   → Uses "castle" or inherits if inherit=true
+
+2. EMPTY PARENTHESES: No name displayed
+   SCENE castle ()
+   → No name shown (useful for locations represented by image only)
+
+3. TEXT IN PARENTHESES: Use this text
+   SCENE castle (Das Königsschloss)
+   → Shows "Das Königsschloss"
+
+CUSTOM DESTINATION LABELS:
+
+When defining destinations, you can override the display text:
+
+  >castle "Zum Schloss gehen"
+
+This shows "Zum Schloss gehen" instead of the castle's default name.
+
+8.3 ASSET MANAGEMENT
+--------------------------------------------------------------------------------
+
+IMAGES:
+
+Images are specified on the line after the declaration:
+
+  SCENE forest
+  forest.jpg
+
+  PERSON witch
+  witch.png
+
+Supported formats: .jpg, .jpeg, .png, .gif, .webp
+
+EMOJIS:
+
+Instead of image filename, use a single emoji:
+
+  SCENE forest
+  🌲
+
+  PERSON witch
+  🧙‍♀️
+
+  SYMBOL key
+  🗝️
+
+IMAGE REFERENCE:
+
+You can reference another item's image with @itemID syntax:
+
+  SYMBOL sword
+  sword.jpg
+
+  SYMBOL magic_sword
+  @sword
+
+This makes magic_sword use sword.jpg.
+
+ASSET LOADING:
+
+The engine supports:
+• URL-based loading (script in URL parameters)
+• ZIP upload (script + images in one package)
+• Direct script editing (inline emoji or filename references)
+
+MOBILE OPTIMIZATION:
+
+• Images are responsive
+• Touch-friendly interface
+• Swipe gestures (depending on animation style)
+• Optimized for small screens
+
+8.4 DRAG-AND-DROP INVENTORY
+--------------------------------------------------------------------------------
+
+The inventory uses drag-and-drop for item management:
+• Drag items from inventory to character to trigger reactions
+• Touch support on mobile devices
+• Visual feedback during drag
+• Smooth animations
+
+Items show:
+• Emoji or image
+• Name (if specified)
+• Count (if > 1)
+
+
+================================================================================
+9. REFERENCE
+================================================================================
+
+9.1 COMMAND OVERVIEW
+--------------------------------------------------------------------------------
+
+INVENTORY COMMANDS:
+  +itemID           Add item to inventory
+  -itemID           Remove one item from inventory
+  %itemID           Remove all of item from inventory
+  &%                Clear entire inventory
+  %%                Clear entire inventory (alternative)
+
+MEMORY COMMANDS:
+  @+memoryID        Add/increment memory value
+  @-memoryID        Subtract/decrement memory value
+  @%memoryID        Remove specific memory entry
+  @%                Clear all memory
+  @prefix_>@target  Copy memory entries with suffix transformation
+  @!                Upload memory to Telegraph
+  @?                Download memory from Telegraph
+
+NAVIGATION COMMANDS:
+  &locationID       Teleport to location
+  §characterID      Switch to character
+  §                 Remove current character
+  #systemID         Execute system
+
+REQUIREMENTS:
+  itemID            Item must be in inventory
+  %itemID           Item must NOT be in inventory
+  @memoryID         Memory must exist and be > 0
+  @%memoryID        Memory must NOT exist or be 0
+  itemID>N          Item count must be > N
+  itemID<N          Item count must be < N
+  @memoryID>N       Memory value must be > N
+  @memoryID<N       Memory value must be < N
+
+DISPLAY:
+  "text"            Display text to player
+  [@prefix_]        Insert random memory value with prefix
+
+9.2 SYMBOL REFERENCE
+--------------------------------------------------------------------------------
+
++   Add to inventory
+-   Remove from inventory
+%   Remove all / negation
+@   Memory operation prefix
+&   Teleport
+§   Character switch
+#   System call
+>   Destination
+[]  Reaction trigger
+()  Requirements / Display name
+""  Text string
+//  Comment
+_   Wildcard suffix
+!   Upload (in @!)
+?   Download (in @?)
+
+9.3 PATTERN SYNTAX
+--------------------------------------------------------------------------------
+
+WILDCARD PATTERN:
+  itemID_           Matches all items starting with itemID_
+  @memoryID_        Matches all memory entries starting with memoryID_
+
+PLACEHOLDER PATTERN:
+  [@prefix_]        Replaced with random suffix from matching memory entries
+
+REQUIREMENTS PATTERN:
+  (req1, req2, req3) Multiple requirements (AND logic)
+
+COMPARISON PATTERN:
+  itemID>N          Greater than N
+  itemID<N          Less than N
+  @memoryID>N       Greater than N (memory)
+  @memoryID<N       Less than N (memory)
+
+9.4 RESERVED KEYWORDS
+--------------------------------------------------------------------------------
+
+SECTION HEADERS:
+  DEBUG
+  SCENE
+  PERSON
+  SYMBOL
+  SYSTEM
+  Reaktionen
+
+DEBUG KEYS (case-insensitive):
+  start, debug, world, token, background, textcolor, textfont, labelfont,
+  animation, inherit, ort, charakter, person, inventar, welt
+
+SPECIAL IDS:
+  nichts            Used for empty item reactions []
+
+CASE SENSITIVITY:
+  • Item IDs: case-insensitive (stored as lowercase)
+  • Location IDs: case-insensitive
+  • Character IDs: case-insensitive
+  • System IDs: case-insensitive
+  • Memory IDs: case-SENSITIVE
+  • Display text: preserves exact casing
+
+
+================================================================================
+10. EXAMPLES
+================================================================================
+
+10.1 BASIC ADVENTURE
+--------------------------------------------------------------------------------
+
+DEBUG
+start: &start §narrator +map
+debug: false
+background: #000000
+textcolor: #e6e6e6
+textfont: IM Fell English (italic)
+labelfont: IM Fell English (normal)
+animation: page
+inherit: true
+
+SCENE start (Ein dunkler Wald)
+🌲
+narrator
+>village (map)
+>cave (torch, @brave)
+
+PERSON narrator (Erzähler)
+📖
+"Willkommen im Schwarzwald. Dein Abenteuer beginnt hier."
+"Viel Glück auf deiner Reise!" +compass
+
+SYMBOL map (Alte Karte)
+🗺️
+
+SYMBOL torch (Fackel)
+🔦
+
+SYMBOL compass (Kompass)
+🧭
+
+SCENE village (Das Dorf)
+🏘️
+shopkeeper
+>start "Zurück zum Wald"
+
+PERSON shopkeeper (Händler)
+👨‍💼
+"Willkommen in meinem Laden!"
+[compass] "Ein feiner Kompass! Ich gebe dir eine Münze dafür." -compass +coin
+[coin] "Danke für deinen Einkauf!" -coin +torch
+
+SYMBOL coin (Goldmünze)
+🪙
+
+SCENE cave (Die Höhle)
+🕳️
+dragon (coin)
+>start "Zurück zum Wald"
+
+PERSON dragon (Drache)
+🐉
+"ROOOAR! Wer wagt es, meine Höhle zu betreten?"
+(coin) "Oder... hast du eine Münze für mich?" @+dragonFriend
+[coin] "Ah, eine Münze! Du darfst passieren." -coin +treasure §
+
+SYMBOL treasure (Schatz)
+💎
+
+
+10.2 COMPLEX INTERACTIONS
+--------------------------------------------------------------------------------
+
+DEBUG
+start: &entrance §guide +notebook
+debug: false
+world: mystery-game
+token: secret123
+background: #1a1a2e
+textcolor: #eee2dc
+textfont: Crimson Text (20, normal)
+labelfont: Cinzel (14, bold)
+animation: slide
+
+SCENE entrance (Der Eingang)
+entrance.jpg
+guide
+investigator (@hasClue1, @hasClue2, @hasClue3)
+>library (notebook)
+>garden (key)
+>cellar (@hasClue1)
+
+PERSON guide (Der Führer)
+guide.jpg
+"Willkommen. Drei Hinweise führen zur Wahrheit."
+[notebook] "Schreib alles auf. Details sind wichtig." §
+
+PERSON investigator (Detektiv)
+detective.jpg
+(@hasClue1, @hasClue2, @hasClue3) "Du hast alle Hinweise! Folge mir." #solve_mystery
+"Finde erst alle drei Hinweise."
+[nichts] "Zeig mir, was du gefunden hast."
+
+SYSTEM solve_mystery
+@!
++solution
+&final_room
+§master
+
+SCENE library (Die Bibliothek)
+library.jpg
+librarian
+>entrance "Zurück"
+
+PERSON librarian (Bibliothekar)
+librarian.jpg
+"Psst! Hier muss es leise sein."
+(%book) "Nimm dieses Buch. Es könnte wichtig sein." +book
+[book] "Lies Seite 42." @+hasClue1 @+clue_library
+
+SYMBOL book (Altes Buch)
+📕
+
+SCENE garden (Der Garten)
+garden.jpg
+gardener (shovel)
+>entrance "Zurück"
+
+PERSON gardener (Gärtner)
+gardener.jpg
+"Schöner Tag zum Graben!"
+"Möchtest du meine Schaufel leihen?" +shovel
+[shovel] "Grab beim verwelkten Rosenbusch." @+hasClue2 @+clue_garden
+
+SYMBOL shovel (Schaufel)
+🔨
+
+SCENE cellar (@hasClue1)
+cellar.jpg
+ghost
+>entrance "Zurück"
+
+PERSON ghost (Geist)
+ghost.jpg
+"Uuuuuh... ich warte seit Jahren..."
+(@hasClue2) "Du hast gegraben... gut... der dritte Hinweis..." @+hasClue3 @+clue_cellar
+[nichts] "Zeig mir nichts... ich zeige dir nichts..."
+
+
+10.3 MEMORY MANAGEMENT
+--------------------------------------------------------------------------------
+
+DEBUG
+start: &hub §admin
+debug: true
+world: savegame-test
+token: test-token
+
+SCENE hub
+🏛️
+admin
+>level1 (@level>0)
+>level2 (@level>1)
+>level3 (@level>2)
+
+PERSON admin
+👤
+"Willkommen im Speicher-Test."
+"Level erhöhen" @+level
+"Level zurücksetzen" @%level
+"Statistiken anzeigen" #show_stats
+"Speichern" @!
+"Laden" @?
+"Alles löschen" @% &hub
+
+SYSTEM show_stats
+"." @+stats_shown
+
+SCENE level1
+1️⃣
+npc
+>hub "Zurück"
+
+PERSON npc
+🧑
+"Level 1 abgeschlossen!" @+level1_complete @+completed_ +star &hub
+
+SYMBOL star
+⭐
+
+SCENE level2 (@level>1)
+2️⃣
+npc2
+>hub "Zurück"
+
+PERSON npc2
+👤
+"Level 2 abgeschlossen!" @+level2_complete @+completed_ +star +star &hub
+
+SCENE level3 (@level>2)
+3️⃣
+npc3
+>hub "Zurück"
+
+PERSON npc3
+🧝
+(@completed_>1) "Gut gemacht! Du hast mehrere Level geschafft."
+"Level 3 abgeschlossen!" @+level3_complete @+completed_ +star +star +star &hub
+
+
+10.4 THEME CUSTOMIZATION
+--------------------------------------------------------------------------------
+
+EXAMPLE 1: DARK GOTHIC
+
+DEBUG
+start: &castle §vampire
+background: #0d0d0d
+textcolor: #8b0000
+textfont: IM Fell DW Pica (22, italic)
+labelfont: IM Fell DW Pica SC (16, normal)
+animation: page
+inherit: true
+
+SCENE castle (Das Schloss)
+🏰
+vampire
+
+PERSON vampire (Graf Dracula)
+🧛
+"Willkommen in meinem bescheidenen Heim..."
+
+
+EXAMPLE 2: BRIGHT FAIRY TALE
+
+DEBUG
+start: &meadow §fairy
+background: #fff8e7
+textcolor: #2d5016
+textfont: Playfair Display (20, normal)
+labelfont: Quicksand (14, bold)
+animation: page
+inherit: true
+
+SCENE meadow (Die Blumenwiese)
+🌸
+fairy
+
+PERSON fairy (Fee)
+🧚
+"Willkommen im magischen Wald!"
+
+
+EXAMPLE 3: CYBERPUNK
+
+DEBUG
+start: &city §hacker
+background: #0a0e27
+textcolor: #00ffff
+textfont: Share Tech Mono (16, normal)
+labelfont: Orbitron (14, bold)
+animation: slide
+inherit: true
+
+SCENE city (Neo Tokyo)
+🌆
+hacker
+
+PERSON hacker (Zero Cool)
+👨‍💻
+"Jack in, choom. Let's hack the mainframe."
+
+
+EXAMPLE 4: RETRO TEXT ADVENTURE
+
+DEBUG
+start: &cave §narrator
+background: #000000
+textcolor: #00ff00
+textfont: Courier New (14, normal)
+labelfont: Courier New (12, bold)
+animation: none
+inherit: false
+
+SCENE cave
+🕳️
+narrator
+
+PERSON narrator
+📝
+"> You are in a dark cave. You can see a faint light to the north."
+
+
+================================================================================
+QUICK REFERENCE CARD
+================================================================================
+
+SECTIONS:
+  DEBUG                   Configuration
+  SCENE id (name)         Location
+  PERSON id (name)        Character
+  SYMBOL id (name)        Item
+  SYSTEM id               Subroutine
+
+INVENTORY:
+  +item                   Add item
+  -item                   Remove item
+  %item                   Remove all
+  &%                      Clear inventory
+
+MEMORY:
+  @+memory                Increment
+  @-memory                Decrement
+  @%memory                Remove
+  @%                      Clear all
+  @!                      Upload to Telegraph
+  @?                      Download from Telegraph
+
+NAVIGATION:
+  &location               Teleport
+  §character              Switch character
+  #system                 Call system
+
+REQUIREMENTS:
+  (item)                  Has item
+  (%item)                 Doesn't have item
+  (@memory)               Memory exists
+  (@%memory)              Memory doesn't exist
+  (item>5)                Count > 5
+  (@memory<10)            Value < 10
+
+WILDCARDS:
+  item_                   Matches item_*
+  [@prefix_]              Random from prefix_*
+
+SPECIAL:
+  "."                     Auto-skip reaction
+  []                      Empty item (nichts)
+  //                      Comment
+
+================================================================================
+END OF DOCUMENTATION
+================================================================================
+
+For questions, updates, or examples, visit the project repository.
+
+Version 2.0 - Februar 2026
+Schwarzwald-Hexen Adventure Engine
