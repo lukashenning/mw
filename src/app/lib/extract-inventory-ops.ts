@@ -10,7 +10,7 @@ export function extractInventoryOperations(commandStr: string): {
   const removesAll: string[] = [];
   
   // CRITICAL: Use correct regex pattern without excessive backslashes
-  const operationRegex = /([+\-%])(\w+)/g;
+  const operationRegex = /([+%-])(\w+)/g;
   let match;
   
   while ((match = operationRegex.exec(commandStr)) !== null) {

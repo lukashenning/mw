@@ -11,7 +11,7 @@ export function parseInventoryOperations(commandStr: string): {
   const removes: string[] = [];
   const removesAll: string[] = [];
   
-  const operationRegex = /([+\-%])(\w+)/g;
+  const operationRegex = /([+%-])(\w+)/g;
   let match;
   
   while ((match = operationRegex.exec(commandStr)) !== null) {
@@ -50,8 +50,8 @@ export function applyMatchAllHotfix() {
     console.log('🔍 matchAll called with pattern:', regexSource);
     
     // Only intercept inventory operation patterns
-    // Note: regexp.source for /([+\-%])(\w+)/g is '([+\\-%])(\\w+)' (single backslash in source)
-    if (regexSource === '([+\\-%])(\\w+)' || regexSource === '([+-])(\\w+)') {
+    // Note: regexp.source for /([+%-])(\w+)/g is '([+%-])(\\w+)' (single backslash in source)
+    if (regexSource === '([+%-])(\\w+)' || regexSource === '([+-])(\\w+)') {
       console.log('✅ HOTFIX APPLIED for pattern:', regexSource);
       // Use our safe parsing instead
       const result = parseInventoryOperations(this as string);

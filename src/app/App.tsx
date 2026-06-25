@@ -269,7 +269,7 @@ function extractInventoryOperations_DEPRECATED_DO_NOT_USE(commandStr: string): {
   const removes: string[] = [];
   const removesAll: string[] = [];
   
-  const operationRegex = /([+\\-%])(\\w+)/g;
+  const operationRegex = /([+%-])(\\w+)/g;
   let match;
   while ((match = operationRegex.exec(commandStr)) !== null) {
     const matchIndex = match.index;
@@ -564,7 +564,7 @@ function parseScript(script: string, assetBackend?: {[filename: string]: string}
         let switchToCharacter: string | null = null;
         
         // Extract all +item, -item, and %item operations
-        const operationMatches = operationsStr.matchAll(/([+\-%])(\w+)/g);
+        const operationMatches = operationsStr.matchAll(/([+%-])(\w+)/g);
         for (const match of operationMatches) {
           const [, operation, targetItem] = match;
           if (operation === '+') {
@@ -850,7 +850,7 @@ function parseScript(script: string, assetBackend?: {[filename: string]: string}
           const { requirements, notRequirements, memoryRequirements, memoryNotRequirements, comparisons, memoryComparisons } = parseRequirements(requirementsStr);
           
           // Extract all +item, -item, and %item operations
-          const operationMatches = operationsStr.matchAll(/([+\-%])(\w+)/g);
+          const operationMatches = operationsStr.matchAll(/([+%-])(\w+)/g);
           for (const match of operationMatches) {
             const [, operation, targetItem] = match;
             if (operation === '+') {
@@ -949,7 +949,7 @@ function parseScript(script: string, assetBackend?: {[filename: string]: string}
           const { requirements, notRequirements, memoryRequirements, memoryNotRequirements, comparisons, memoryComparisons } = parseRequirements(requirementsStr);
           
           // Extract all +item, -item, and %item operations
-          const operationMatches = operationsStr.matchAll(/([+\-%])(\w+)/g);
+          const operationMatches = operationsStr.matchAll(/([+%-])(\w+)/g);
           for (const match of operationMatches) {
             const [, operation, targetItem] = match;
             if (operation === '+') {
@@ -1087,7 +1087,7 @@ function parseScript(script: string, assetBackend?: {[filename: string]: string}
       let systemCall: string | null = null;
       
       // Extract all +item, -item, and %item operations
-      const operationMatches = commandsStr.matchAll(/([+\-%])(\w+)/g);
+      const operationMatches = commandsStr.matchAll(/([+%-])(\w+)/g);
       for (const match of operationMatches) {
         const [, operation, targetItem] = match;
         if (operation === '+') {
@@ -1481,7 +1481,7 @@ function parseScript(script: string, assetBackend?: {[filename: string]: string}
               let telegraphDownload = false;
               
               // Extract all +item, -item, and %item operations
-              const operationMatches = operationsStr.matchAll(/([+\-%])(\w+)/g);
+              const operationMatches = operationsStr.matchAll(/([+%-])(\w+)/g);
               for (const match of operationMatches) {
                 const [, operation, targetItem] = match;
                 if (operation === '+') {
@@ -1586,7 +1586,7 @@ function parseScript(script: string, assetBackend?: {[filename: string]: string}
           let telegraphDownload = false;
           
           // Extract all +item, -item, and %item operations
-          const operationMatches = operationsStr.matchAll(/([+\-%])(\w+)/g);
+          const operationMatches = operationsStr.matchAll(/([+%-])(\w+)/g);
           for (const match of operationMatches) {
             const [, operation, targetItem] = match;
             if (operation === '+') {
